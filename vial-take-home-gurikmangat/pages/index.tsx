@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
     Table,
-    ScrollArea,
     UnstyledButton,
     Group,
     Text,
@@ -84,6 +83,8 @@ function TableSort() {
     const [sortedData, setSortedData] = useState<RowData[]>([]);
     const [sortBy, setSortBy] = useState<keyof RowData | null>(null);
     const [reverseSortDirection, setReverseSortDirection] = useState(false);
+    const [genderFilter, setGenderFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
 
     useEffect(() => {
         axios.get('https://055d8281-4c59-4576-9474-9b4840b30078.mock.pstmn.io/subjects')
@@ -93,6 +94,27 @@ function TableSort() {
             })
             .catch(error => console.error("There was an error!", error));
     }, []);
+
+    useEffect(() => {
+        applyFiltersAndSorting();
+    }, [search, sortBy, reverseSortDirection, genderFilter, statusFilter, subjects]);
+
+    function applyFiltersAndSorting() {
+        let filteredData = subjects;
+
+        if (genderFilter) {
+            filteredData = filteredData.filter(item => item.gender === genderFilter);
+        }
+
+        if (statusFilter) {
+            filteredData = filteredData.filter(item => item.status === statusFilter);
+        }
+
+        filteredData = filterData(filteredData, search);
+
+        const finalData = sortData(filteredData, { sortBy, reversed: reverseSortDirection, search });
+        setSortedData(finalData);
+    }
 
     const setSorting = (field: keyof RowData) => {
         const reversed = field === sortBy ? !reverseSortDirection : false;
@@ -109,24 +131,45 @@ function TableSort() {
 
     const rows = sortedData.map((row) => (
         <Table.Tr key={row.id}>
-            <Table.Td>{row.name}</Table.Td>
-            <Table.Td>{row.age}</Table.Td>
-            <Table.Td>{row.gender}</Table.Td>
-            <Table.Td>{new Date(row.diagnosisDate).toLocaleDateString()}</Table.Td>
-            <Table.Td>{row.status}</Table.Td>
+            <Table.Td style={{ borderBottom: '1px solid black', borderRight: '1px solid black', padding: '2px' }}>{row.name}</Table.Td>
+            <Table.Td style={{ borderBottom: '1px solid black', borderRight: '1px solid black', padding: '2px' }}>{row.age}</Table.Td>
+            <Table.Td style={{ borderBottom: '1px solid black', borderRight: '1px solid black', padding: '2px' }}>{row.gender}</Table.Td>
+            <Table.Td style={{ borderBottom: '1px solid black', borderRight: '1px solid black', padding: '2px' }}>{new Date(row.diagnosisDate).toLocaleDateString()}</Table.Td>
+            <Table.Td style={{ borderBottom: '1px solid black', borderRight: '1px solid black', padding: '2px' }}>{row.status}</Table.Td>
         </Table.Tr>
     ));
 
     return (
-        <MantineProvider withGlobalStyles withNormalizeCSS>
-        <ScrollArea>
+        <MantineProvider>
+            <div style={{ paddingBottom: '16px', paddingTop: '16px' }}>
             <TextInput
-                placeholder="Search by any field"
+                placeholder="Search by Name, Age, or Date"
                 mb="md"
-                leftSection={<IconSearch style={{ width: rem(16), height: rem(16) }} stroke={1.5} />}
+                label="Search Patient Data"
+                // leftSection={<IconSearch />}
                 value={search}
+                styles={{
+                    input: {
+                        width: '360px'
+                    }
+                }}
                 onChange={handleSearchChange}
+
             />
+                </div>
+
+            <select value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)}>
+                <option value="">Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                    <option value="">Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+
             <Table horizontalSpacing="md" verticalSpacing="xs" layout="fixed">
                 <Table.Thead>
                     <Table.Tr>
@@ -179,7 +222,6 @@ function TableSort() {
                     )}
                 </Table.Tbody>
             </Table>
-        </ScrollArea>
         </MantineProvider>
     );
 }
