@@ -11,7 +11,7 @@ import {
     rem, MantineProvider,
 } from '@mantine/core';
 import { IconSelector, IconChevronDown, IconChevronUp, IconSearch } from '@tabler/icons-react';
-import classes from './TableSort.module.css';
+import classes from './tablesort.module.scss';
 
 interface RowData {
     id: string;

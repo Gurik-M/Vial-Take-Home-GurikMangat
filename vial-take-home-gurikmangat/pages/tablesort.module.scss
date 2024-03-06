@@ -1,0 +1,13 @@
+.th {
+    padding: 1px;
+}
+
+.control {
+    width: 100%;
+    padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+
+    /* Directly apply hover styles */
+    &:hover {
+        background-color: var(--mantine-color-gray-0);
+    }
+}
