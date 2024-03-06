@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { MantineProvider, Table, TextInput, ScrollArea, UnstyledButton, Group, Text, Center } from '@mantine/core';
+import { IconSelector, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 
 function FilterableTable() {
     const [subjects, setSubjects] = useState([]);
     const [filter, setFilter] = useState('');
+    const [sortBy, setSortBy] = useState(null);
+    const [reverseSortDirection, setReverseSortDirection] = useState(false);
 
     useEffect(() => {
         axios.get('https://055d8281-4c59-4576-9474-9b4840b30078.mock.pstmn.io/subjects')
@@ -13,55 +17,73 @@ function FilterableTable() {
             .catch(error => console.error("There was an error!", error));
     }, []);
 
-    const filteredSubjects = subjects.filter(subject =>
-        subject.name.toLowerCase().includes(filter.toLowerCase())
-    );
+    const handleSort = (field) => {
+        const isReversed = sortBy === field ? !reverseSortDirection : false;
+        setReverseSortDirection(isReversed);
+        setSortBy(field);
+    };
+
+    const sortedAndFilteredSubjects = subjects
+        .filter(subject =>
+            Object.values(subject).some(value =>
+                value.toString().toLowerCase().includes(filter.toLowerCase())
+            )
+        )
+        .sort((a, b) => {
+            if (!sortBy) return 0;
+            if (reverseSortDirection) {
+                return ('' + b[sortBy]).localeCompare(a[sortBy]);
+            }
+            return ('' + a[sortBy]).localeCompare(b[sortBy]);
+        });
+
+
 
     return (
-        <div>
-            <input
-                type="text"
-                placeholder="Filter by name..."
-                className="mb-4 p-2 border border-gray-300 rounded"
-                onChange={e => setFilter(e.target.value)}
-            />
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Age
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Diagnosis Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                    </th>
-                </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                {filteredSubjects.map((subject, index) => (
-                    <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                            {subject.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                            {subject.age}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                            {new Date(subject.diagnosisDate).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                            {subject.status}
-                        </td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-        </div>
+        <MantineProvider withGlobalStyles withNormalizeCSS>
+            <div>
+                <TextInput
+                    placeholder="Filter by any field..."
+                    value={filter}
+                    onChange={(event) => setFilter(event.currentTarget.value)}
+                    style={{ marginBottom: 20 }}
+                />
+                <ScrollArea>
+                    <Table striped highlightOnHover>
+                        <thead>
+                        <tr>
+                            {['ID', 'Name', 'Age', 'Gender', 'Diagnosis Date', 'Status'].map((header) => (
+                                <th key={header}>
+                                    <UnstyledButton onClick={() => handleSort(header.toLowerCase())}>
+                                        <Group>
+                                            <Text>{header}</Text>
+                                            {sortBy === header.toLowerCase() && (
+                                                <Center>
+                                                    {reverseSortDirection ? <IconChevronUp /> : <IconChevronDown />}
+                                                </Center>
+                                            )}
+                                        </Group>
+                                    </UnstyledButton>
+                                </th>
+                            ))}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {sortedAndFilteredSubjects.map((subject, index) => (
+                            <tr key={index}>
+                                <td>{subject.id}</td>
+                                <td>{subject.name}</td>
+                                <td>{subject.age}</td>
+                                <td>{subject.gender}</td>
+                                <td>{new Date(subject.diagnosisDate).toLocaleDateString()}</td>
+                                <td>{subject.status}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </Table>
+                </ScrollArea>
+            </div>
+        </MantineProvider>
     );
 }
 
